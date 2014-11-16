@@ -56,9 +56,10 @@ var scale = 1.5;
 
 function raytrace(col, sx, sy, ex, ey, fz) {
 
-    var dx = (sx -ex);
-    var dy = (sy -ey);
+    var dx = (sx - ex);
+    var dy = (sy - ey);
     var r = Math.floor(Math.sqrt(dx * dx + dy * dy));
+
     dx = dx/r;
     dy = dy/r;
 
@@ -67,12 +68,13 @@ function raytrace(col, sx, sy, ex, ey, fz) {
 
     var ymin = scene.height;
     for (var i=0; i < r; i++) {
+
         x+=dx; // dont start at location;
         y+=dy;
         
-        //var mapoffset = pH*y*4 + x*4;
+        var mapoffset = pH*Math.floor(y)*4 + Math.floor(x)*4;
         // voodoo
-        var mapoffset = ((Math.floor(y) & 1023) << 10) + (Math.floor(x) & 1023) * 4;
+        //var mapoffset = ((Math.floor(y) & 1023) << 10) + (Math.floor(x) & 1023) * 4;
         window.mapoffset = mapoffset;
 
 
@@ -86,20 +88,20 @@ function raytrace(col, sx, sy, ex, ey, fz) {
         }
 
         // prespective calc && 'zbuf' check
-        depthVal = 128 - depthVal + camera.height;
+        depthVal = depthVal - camera.height;
         var heightScale = Math.abs(fz) * i;
-        var z = depthVal/heightScale * 100 - camera.v;
 
-        if (z < 0) z = 0;
+        var z = (depthVal * 1/heightScale) * 100 - camera.v;
+
         if ( z < scene.height - 1) {
-            var offset = (Math.floor(z) * scene.width) + col;
+            var offset = (Math.floor(z) * scene.width*4) + col;
 
             for (var k = Math.floor(z); k < ymin; k++) {
                 scene.data[offset + 0] = colourVal.r; 
                 scene.data[offset + 1] = colourVal.g; 
                 scene.data[offset + 2] = colourVal.b; 
                 scene.data[offset + 3] = colourVal.a; 
-                offset+= scene.width;
+                offset+= scene.width*4;
             }
         }
 
@@ -109,6 +111,9 @@ function raytrace(col, sx, sy, ex, ey, fz) {
 
 function update() {
     var size = scene.width * scene.height;
+    
+    var startx = camera.x;
+    var starty = camera.y;
 
     // calc camera rotation
     var ca = Math.cos(camera.angle); 
@@ -121,20 +126,18 @@ function update() {
         scene.data[i + 3] = 255;
     } 
 
-    var startx = camera.x;
-    var starty = camera.y;
+    for (var i = 0; i < scene.width*4; i+=4) {
+        
+        var relx = (i - scene.width*4/2);
+        var rely = (1*focalDepth);
 
-    for (var i = 0; i < scene.width; i++) {
         // rotate vector by angle
+        
+        var endx = relx + startx // relative to mid point in map;
+        var endy = rely + starty; // always furthest out in the map
 
-        // what happens when i dont start in the middle?
-        var endx = ((i - scene.width) + scene.width/2) + startx// relative to mid point in map;
-        var endy = (-1*focalDepth) * scale + starty; // always furthest out in the map
 
-        var dx = endx - startx;
-        var dy = endy - starty;
-
-        var fz = dy / (Math.sqrt(dx*dx + dy*dy));
+        var fz = rely / (Math.sqrt(relx*relx + rely*rely));
 
         raytrace(i, startx, starty, endx, endy, fz);
 
