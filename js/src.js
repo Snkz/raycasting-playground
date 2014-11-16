@@ -45,34 +45,38 @@ function load(file, type) {
 
 var camera = {
     x: 512,
-    y: 800,
+    y: 400,
     height: -50,
     angle: 0,
     v: -100
 }
 
-var focalDepth = 400;
+var focalDepth = 800;
 var scale = 1.5;
-
+var firsttime = 0;
 function raytrace(col, sx, sy, ex, ey, fz) {
 
     var dx = (sx - ex);
     var dy = (sy - ey);
     var r = Math.floor(Math.sqrt(dx * dx + dy * dy));
 
-    dx = dx/r;
-    dy = dy/r;
+    dx = (dx/r);
+    dy = (dy/r);
 
     var x = sx;
     var y = sy;
 
+    
+    if (col% 100 === 0 && firsttime === 0) {
+        console.log(col, ex, ey, x);
+    }
     var ymin = scene.height;
     for (var i=0; i < r; i++) {
 
         x+=dx; // dont start at location;
         y+=dy;
         
-        var mapoffset = pH*Math.floor(y)*4 + Math.floor(x)*4;
+        var mapoffset = pW*Math.floor(y)*4 + Math.floor(x)*4;
         // voodoo
         //var mapoffset = ((Math.floor(y) & 1023) << 10) + (Math.floor(x) & 1023) * 4;
         window.mapoffset = mapoffset;
@@ -88,13 +92,14 @@ function raytrace(col, sx, sy, ex, ey, fz) {
         }
 
         // prespective calc && 'zbuf' check
-        depthVal = depthVal - camera.height;
-        var heightScale = Math.abs(fz) * i;
+        depthVal = 128 - depthVal + camera.height;
+        var heightScale = Math.abs(fz) * i * 4;
 
-        var z = (depthVal * 1/heightScale) * 100 - camera.v;
+        var z = ((depthVal/heightScale) * 100 - camera.v)*4;
 
-        if ( z < scene.height - 1) {
-            var offset = (Math.floor(z) * scene.width*4) + col;
+        if (z < 0) z = 0;
+        if ( z < scene.height*4 - 1) {
+            var offset = (Math.floor(z) * scene.width * 4) + col;
 
             for (var k = Math.floor(z); k < ymin; k++) {
                 scene.data[offset + 0] = colourVal.r; 
@@ -129,7 +134,7 @@ function update() {
     for (var i = 0; i < scene.width*4; i+=4) {
         
         var relx = (i - scene.width*4/2);
-        var rely = (1*focalDepth);
+        var rely = (-1*focalDepth)*4;
 
         // rotate vector by angle
         
@@ -142,6 +147,8 @@ function update() {
         raytrace(i, startx, starty, endx, endy, fz);
 
     }
+
+    firsttime = 1;
 
 
    context.putImageData(scene, 0, 0);
