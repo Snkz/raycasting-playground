@@ -132,7 +132,8 @@
             switch (this.colorType) {
               case 3:
                 this.transparency.indexed = this.read(chunkSize);
-                short = 255 - this.transparency.indexed.length;
+                //short = 255 - this.transparency.indexed.length;
+                //short = (this.palette.length/3) - this.transparency.indexed.length;
                 if (short > 0) {
                   for (i = _j = 0; 0 <= short ? _j < short : _j > short; i = 0 <= short ? ++_j : --_j) {
                     this.transparency.indexed.push(255);

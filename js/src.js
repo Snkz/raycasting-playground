@@ -2,9 +2,6 @@ var canvas = document.getElementById('canvas');
 var context = canvas.getContext("2d");
 var scene = context.createImageData(canvas.width, canvas.height);
 
-load('C1.png', "colour");
-load('D1.png', "depth");
-
 // map dim
 var pW = 1024;
 var pH = 1024;
@@ -12,12 +9,14 @@ var pH = 1024;
 // map
 var depthmap = new Uint8Array(pW*pH);
 var colourmap = new Uint8Array(pW*pH);
+var bg = new Uint8Array(scene.height*scene.width*4);
+var buffer = new Uint32Array(scene.height*scene.width*4);
 var _depthloaded = false;
 var _colourloaded = false;
 
 function load(file, type) {
+    
     var req = new XMLHttpRequest();
-    req.responseType = "arraybuffer";
     req.onload = function() {
         if (req.readyState === 4) {
             if (req.status === 200) {
@@ -25,7 +24,6 @@ function load(file, type) {
                 var png = new PNG(buf);
                 if (type === 'depth') { depthmap = png.decode(); _depthloaded = true; }
                 if (type === 'colour') { colourmap = png.decode(); _colourloaded = true; }
-                //png.render(canvas);
             } else {
                 console.log('Failed to load: ' + req.statusText);
             }
@@ -40,9 +38,12 @@ function load(file, type) {
              "terrain/"  + type +  "/" + file,
              true);
 
+    req.responseType = "arraybuffer";
     req.send();
+
 }
 
+var focalDepth = 300;
 var camera = {
     x: 512,
     y: 400,
@@ -51,10 +52,8 @@ var camera = {
     v: -100
 }
 
-var focalDepth = 800;
-var scale = 1.5;
-var firsttime = 0;
-function raytrace(col, sx, sy, ex, ey, fz) {
+
+function raycast(col, sx, sy, ex, ey, fz) {
 
     var dx = (sx - ex);
     var dy = (sy - ey);
@@ -67,18 +66,16 @@ function raytrace(col, sx, sy, ex, ey, fz) {
     var y = sy;
 
     
-    if (col% 100 === 0 && firsttime === 0) {
-        console.log(col, ex, ey, x);
-    }
     var ymin = scene.height;
     for (var i=0; i < r; i++) {
 
         x+=dx; // dont start at location;
         y+=dy;
         
-        var mapoffset = pW*Math.floor(y)*4 + Math.floor(x)*4;
+        //var mapoffset = pW*Math.floor(y)*4 + Math.floor(x)*4;
         // voodoo
-        //var mapoffset = ((Math.floor(y) & 1023) << 10) + (Math.floor(x) & 1023) * 4;
+        var mapoffset = (((Math.floor(y) & 4095) << 10) + (Math.floor(x) & 4095)) * 4;
+        //var mapoffset = (((Math.floor(y) & 1023) << 10) + (Math.floor(x) & 1023)) * 4;
         window.mapoffset = mapoffset;
 
 
@@ -89,12 +86,14 @@ function raytrace(col, sx, sy, ex, ey, fz) {
             g:colourmap[mapoffset + 1],
             b:colourmap[mapoffset + 2],
             a:colourmap[mapoffset + 3]
-        }
+        };
+
+        
+        // invert depthvals and shift by height
+        depthVal = 128 - depthVal + camera.height;
 
         // prespective calc && 'zbuf' check
-        depthVal = 128 - depthVal + camera.height;
-        var heightScale = Math.abs(fz) * i * 4;
-
+        var heightScale = Math.abs(fz) * i;
         var z = ((depthVal/heightScale) * 100 - camera.v)*4;
 
         if (z < 0) z = 0;
@@ -102,12 +101,20 @@ function raytrace(col, sx, sy, ex, ey, fz) {
             var offset = (Math.floor(z) * scene.width * 4) + col;
 
             for (var k = Math.floor(z); k < ymin; k++) {
-                scene.data[offset + 0] = colourVal.r; 
-                scene.data[offset + 1] = colourVal.g; 
-                scene.data[offset + 2] = colourVal.b; 
-                scene.data[offset + 3] = colourVal.a; 
+                //var col = 0x00000000 | (colourVal.r << 24) | (colourVal.g << 16) | (colourVal.b << 8) | (colourVal.a);
+                //scene.data[offset + 0] = colourVal.r; 
+                //scene.data[offset + 1] = colourVal.g; 
+                //scene.data[offset + 2] = colourVal.b; 
+                //scene.data[offset + 3] = colourVal.a; 
+                buffer[offset + 0] = colourVal.r; 
+                buffer[offset + 1] = colourVal.g; 
+                buffer[offset + 2] = colourVal.b; 
+                buffer[offset + 3] = colourVal.a; 
+                //buffer[offset]  = col;
                 offset+= scene.width*4;
+
             }
+
         }
 
         if(ymin > z) ymin = Math.floor(z);
@@ -124,12 +131,14 @@ function update() {
     var ca = Math.cos(camera.angle); 
     var sa = Math.sin(camera.angle);
 
-    for (var i = 0; i < size*4; i+=4) {
-        scene.data[i + 0] = 160; 
-        scene.data[i + 1] = 160;
-        scene.data[i + 2] = 255;
-        scene.data[i + 3] = 255;
-    } 
+    scene.data.set(bg);
+    buffer = new Uint8Array(bg);
+    //for (var i = 0; i < size*4; i+=4) {
+    //    scene.data[i + 0] = 160; 
+    //    scene.data[i + 1] = 160;
+    //    scene.data[i + 2] = 255;
+    //    scene.data[i + 3] = 255;
+    //} 
 
     for (var i = 0; i < scene.width*4; i+=4) {
         
@@ -144,13 +153,11 @@ function update() {
 
         var fz = rely / (Math.sqrt(relx*relx + rely*rely));
 
-        raytrace(i, startx, starty, endx, endy, fz);
+        raycast(i, startx, starty, endx, endy, fz);
 
     }
 
-    firsttime = 1;
-
-
+   scene.data.set(buffer);
    context.putImageData(scene, 0, 0);
 }
 
@@ -159,6 +166,28 @@ function render() {
     update();
 }
 
+function init() {
 
+    load('C1.png', "colour");
+    load('D1.png', "depth");
+    
+    var size = scene.width * scene.height;
+    
+    for (var i = 0; i < size*4; i+=4) {
+        bg[i + 0] = 160; 
+        bg[i + 1] = 160;
+        bg[i + 2] = 255;
+        bg[i + 3] = 255;
+    } 
+   
+    scene.data.set(bg);
+    context.putImageData(scene, 0, 0);
+}
+
+init();
 render();
+Mousetrap.bind('w', function() { camera.x -= 3 }, 'keydown');
+Mousetrap.bind('a', function() { camera.x += 3 }, 'keydown');
+Mousetrap.bind('s', function() { camera.y += 1 }, 'keydown');
+Mousetrap.bind('d', function() { camera.y -= 1 }, 'keydown');
 
