@@ -101,16 +101,10 @@ function raycast(col, sx, sy, ex, ey, fz) {
             var offset = (Math.floor(z) * scene.width * 4) + col;
 
             for (var k = Math.floor(z); k < ymin; k++) {
-                //var col = 0x00000000 | (colourVal.r << 24) | (colourVal.g << 16) | (colourVal.b << 8) | (colourVal.a);
-                //scene.data[offset + 0] = colourVal.r; 
-                //scene.data[offset + 1] = colourVal.g; 
-                //scene.data[offset + 2] = colourVal.b; 
-                //scene.data[offset + 3] = colourVal.a; 
-                buffer[offset + 0] = colourVal.r; 
-                buffer[offset + 1] = colourVal.g; 
-                buffer[offset + 2] = colourVal.b; 
-                buffer[offset + 3] = colourVal.a; 
-                //buffer[offset]  = col;
+                scene.data[offset + 0] = colourVal.r; 
+                scene.data[offset + 1] = colourVal.g; 
+                scene.data[offset + 2] = colourVal.b; 
+                scene.data[offset + 3] = colourVal.a; 
                 offset+= scene.width*4;
 
             }
@@ -132,13 +126,6 @@ function update() {
     var sa = Math.sin(camera.angle);
 
     scene.data.set(bg);
-    buffer = new Uint8Array(bg);
-    //for (var i = 0; i < size*4; i+=4) {
-    //    scene.data[i + 0] = 160; 
-    //    scene.data[i + 1] = 160;
-    //    scene.data[i + 2] = 255;
-    //    scene.data[i + 3] = 255;
-    //} 
 
     for (var i = 0; i < scene.width*4; i+=4) {
         
@@ -157,7 +144,6 @@ function update() {
 
     }
 
-   scene.data.set(buffer);
    context.putImageData(scene, 0, 0);
 }
 
@@ -186,8 +172,8 @@ function init() {
 
 init();
 render();
-Mousetrap.bind('w', function() { camera.x -= 3 }, 'keydown');
+Mousetrap.bind('w', function() { camera.y += 3 }, 'keydown');
 Mousetrap.bind('a', function() { camera.x += 3 }, 'keydown');
-Mousetrap.bind('s', function() { camera.y += 1 }, 'keydown');
-Mousetrap.bind('d', function() { camera.y -= 1 }, 'keydown');
+Mousetrap.bind('s', function() { camera.y -= 3 }, 'keydown');
+Mousetrap.bind('d', function() { camera.x -= 3 }, 'keydown');
 
