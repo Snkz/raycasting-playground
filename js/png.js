@@ -133,7 +133,7 @@
               case 3:
                 this.transparency.indexed = this.read(chunkSize);
                 //short = 255 - this.transparency.indexed.length;
-                //short = (this.palette.length/3) - this.transparency.indexed.length;
+                short = (this.palette.length/3) - this.transparency.indexed.length;
                 if (short > 0) {
                   for (i = _j = 0; 0 <= short ? _j < short : _j > short; i = 0 <= short ? ++_j : --_j) {
                     this.transparency.indexed.push(255);
@@ -302,7 +302,7 @@
       var c, i, length, palette, pos, ret, transparency, _i, _ref, _ref1;
       palette = this.palette;
       transparency = this.transparency.indexed || [];
-      ret = new Uint8Array((transparency.length || 0) + palette.length);
+      ret = new Uint8Array((transparency.length || palette.length/3) + palette.length);
       pos = 0;
       length = palette.length;
       c = 0;

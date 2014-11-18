@@ -13,6 +13,7 @@ var bg = new Uint8Array(scene.height*scene.width*4);
 var buffer = new Uint32Array(scene.height*scene.width*4);
 var _depthloaded = false;
 var _colourloaded = false;
+var max = pH*pW*4;
 
 function load(file, type) {
     
@@ -74,7 +75,7 @@ function raycast(col, sx, sy, ex, ey, fz) {
         
         //var mapoffset = pW*Math.floor(y)*4 + Math.floor(x)*4;
         // voodoo
-        var mapoffset = (((Math.floor(y) & 4095) << 10) + (Math.floor(x) & 4095)) * 4;
+        var mapoffset = ((((Math.floor(y) & 4095) << 10) + (Math.floor(x) & 4095)) * 4)%max;
         //var mapoffset = (((Math.floor(y) & 1023) << 10) + (Math.floor(x) & 1023)) * 4;
         window.mapoffset = mapoffset;
 
@@ -136,7 +137,7 @@ function update() {
         
         var endx = relx + startx // relative to mid point in map;
         var endy = rely + starty; // always furthest out in the map
-
+        
 
         var fz = rely / (Math.sqrt(relx*relx + rely*rely));
 
