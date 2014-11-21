@@ -1,12 +1,33 @@
 <html>
 <head>
+    <style>
+        body {
 
+            margin: 0px auto;
+            width: 98%;
+            height: 98%;
+        }
+
+        #wrapper {
+
+            margin: 0px auto;
+            width: 100%;
+            height: 100%;
+        }
+
+        #canvas {
+            margin: 0px auto;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 <body>
-
-    <canvas id="canvas" width="1024" height="1024">
-        No Canvas Support 
-    </canvas>
+    <div id="wrapper">
+        <canvas id="canvas" width="512" height="512">
+            No Canvas Support 
+        </canvas>
+    </div>
     <script src="http://cdn.craig.is/js/mousetrap/mousetrap.min.js"></script>
     <script src="js/zlib.js"></script>
     <script src="js/png.js"></script>

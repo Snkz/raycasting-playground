@@ -10,10 +10,26 @@ var pH = 1024;
 var depthmap = new Uint8Array(pW*pH);
 var colourmap = new Uint8Array(pW*pH);
 var bg = new Uint8Array(scene.height*scene.width*4);
-var buffer = new Uint32Array(scene.height*scene.width*4);
 var _depthloaded = false;
 var _colourloaded = false;
 var max = pH*pW*4;
+
+var maps = 
+    [
+    //    ['C10W.png', 'D10.png'],
+        ['C1.png', 'D1.png'],
+    //    ['C2W.png', 'D2.png'],
+    //    ['C3.png', 'D3.png'],
+    //    ['C4.png', 'D4.png'],
+    //    ['C5W.png', 'D5.png'],
+    //    ['C6W.png', 'D6.png'],
+        ['C7W.png', 'D7.png'],
+    //   ['C8.png', 'D8.png'],
+    //    ['C9W.png', 'D9.png']
+    ]
+
+var pos = 0;
+var num_maps = maps.length;
 
 function load(file, type) {
     
@@ -23,8 +39,17 @@ function load(file, type) {
             if (req.status === 200) {
                 var buf = new Uint8Array(req.response || req.mozResponseArrayBuffer);
                 var png = new PNG(buf);
-                if (type === 'depth') { depthmap = png.decode(); _depthloaded = true; }
+                if (type === 'depth') { depthmap = png.decode(); _depthloaded = true;}
                 if (type === 'colour') { colourmap = png.decode(); _colourloaded = true; }
+                console.log('loaded ' + type);
+
+                //if (_depthloaded && _colourloaded) {
+
+                //    resetCamera();
+                //    _depthloaded = false;
+                //    _colourloaded = false;
+                //}
+
             } else {
                 console.log('Failed to load: ' + req.statusText);
             }
@@ -50,9 +75,16 @@ var camera = {
     y: 400,
     height: -50,
     angle: 0,
-    v: -100
+    pitch:-100
 }
 
+function resetCamera() {
+    camera.x = 512;
+    camera.y = 400;
+    camera.height = -50;
+    camera.angle = 0;
+    camera.pitch =-100;
+}
 
 function raycast(col, sx, sy, ex, ey, fz) {
 
@@ -67,6 +99,7 @@ function raycast(col, sx, sy, ex, ey, fz) {
     var y = sy;
 
     
+    r  = r/2
     var ymin = scene.height;
     for (var i=0; i < r; i++) {
 
@@ -77,6 +110,7 @@ function raycast(col, sx, sy, ex, ey, fz) {
         // voodoo
         var mapoffset = ((((Math.floor(y) & 4095) << 10) + (Math.floor(x) & 4095)) * 4)%max;
         //var mapoffset = (((Math.floor(y) & 1023) << 10) + (Math.floor(x) & 1023)) * 4;
+        
         window.mapoffset = mapoffset;
 
 
@@ -95,7 +129,7 @@ function raycast(col, sx, sy, ex, ey, fz) {
 
         // prespective calc && 'zbuf' check
         var heightScale = Math.abs(fz) * i;
-        var z = ((depthVal/heightScale) * 100 - camera.v)*4;
+        var z = ((depthVal/heightScale) * 200 - camera.pitch);
 
         if (z < 0) z = 0;
         if ( z < scene.height*4 - 1) {
@@ -134,9 +168,16 @@ function update() {
         var rely = (-1*focalDepth)*4;
 
         // rotate vector by angle
+        // [cos, -sin] [x]
+        // [sin,  cos] [y]
         
-        var endx = relx + startx // relative to mid point in map;
-        var endy = rely + starty; // always furthest out in the map
+
+        rx = ca*relx - sa*rely;
+        ry = sa*relx + ca*rely;
+
+        
+        var endx = rx + startx // relative to mid point in map;
+        var endy = ry + starty; // always furthest out in the map
         
 
         var fz = rely / (Math.sqrt(relx*relx + rely*rely));
@@ -155,8 +196,10 @@ function render() {
 
 function init() {
 
-    load('C1.png', "colour");
-    load('D1.png', "depth");
+    //load('C1.png', "colour");
+    //load('D1.png', "depth");
+
+    loadmaps();
     
     var size = scene.width * scene.height;
     
@@ -171,10 +214,65 @@ function init() {
     context.putImageData(scene, 0, 0);
 }
 
+function loadmaps() {
+    console.log(pos);
+    console.log(maps[pos]);
+    load(maps[pos][0], "colour");
+    load(maps[pos][1], "depth");
+    pos++;
+    pos = pos % num_maps;
+    console.log(pos);
+
+}
+
 init();
 render();
-Mousetrap.bind('w', function() { camera.y += 3 }, 'keydown');
-Mousetrap.bind('a', function() { camera.x += 3 }, 'keydown');
-Mousetrap.bind('s', function() { camera.y -= 3 }, 'keydown');
-Mousetrap.bind('d', function() { camera.x -= 3 }, 'keydown');
+
+Mousetrap.bind('w', function() { 
+
+    var ca = Math.cos(camera.angle); 
+    var sa = Math.sin(camera.angle);
+
+    camera.x += - sa*4;
+    camera.y += ca*4;
+
+});
+
+Mousetrap.bind('a', function() { 
+
+    var ca = Math.cos(camera.angle); 
+    var sa = Math.sin(camera.angle);
+    
+    camera.x += ca*3;
+    camera.y += sa*3
+
+});
+
+Mousetrap.bind('s', function() { 
+
+    var ca = Math.cos(camera.angle); 
+    var sa = Math.sin(camera.angle);
+
+    camera.x -= -sa*4;
+    camera.y -= ca*4;
+
+});
+
+Mousetrap.bind('d', function() { 
+ 
+    var ca = Math.cos(camera.angle); 
+    var sa = Math.sin(camera.angle);
+    
+    camera.x -= ca*3;
+    camera.x -= sa*3
+
+});
+
+Mousetrap.bind('left', function() { camera.angle -= 0.05});
+Mousetrap.bind('right', function() { camera.angle += 0.05});
+Mousetrap.bind('up', function() { camera.pitch -= 10});
+Mousetrap.bind('down', function() { camera.pitch += 10});
+Mousetrap.bind('ctrl+up', function() { camera.height += 10});
+Mousetrap.bind('ctrl+down', function() { camera.height -= 10});
+Mousetrap.bind('space', function() { loadmaps(); });
 
