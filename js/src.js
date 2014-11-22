@@ -69,7 +69,7 @@ function load(file, type) {
 
 }
 
-var focalDepth = 300;
+var focalDepth = 200;
 var camera = {
     x: 512,
     y: 400,
@@ -98,8 +98,6 @@ function raycast(col, sx, sy, ex, ey, fz) {
     var x = sx;
     var y = sy;
 
-    
-    r  = r/2
     var ymin = scene.height;
     for (var i=0; i < r; i++) {
 
@@ -108,12 +106,8 @@ function raycast(col, sx, sy, ex, ey, fz) {
         
         //var mapoffset = pW*Math.floor(y)*4 + Math.floor(x)*4;
         // voodoo
-        var mapoffset = ((((Math.floor(y) & 4095) << 10) + (Math.floor(x) & 4095)) * 4)%max;
-        //var mapoffset = (((Math.floor(y) & 1023) << 10) + (Math.floor(x) & 1023)) * 4;
-        
-        window.mapoffset = mapoffset;
-
-
+        //var mapoffset = ((((Math.floor(y) & 4095) << 10) + (Math.floor(x) & 4095)) * 4)%max;
+        var mapoffset = ((((Math.floor(y) & 1023) << 10) + (Math.floor(x) & 1023)) * 4)%max;
         var depthVal = depthmap[mapoffset];  
         
         var colourVal= { 
@@ -233,8 +227,8 @@ Mousetrap.bind('w', function() {
     var ca = Math.cos(camera.angle); 
     var sa = Math.sin(camera.angle);
 
-    camera.x += - sa*4;
-    camera.y += ca*4;
+    camera.x += - sa*1.5;
+    camera.y += ca*1.5;
 
 });
 
@@ -243,8 +237,8 @@ Mousetrap.bind('a', function() {
     var ca = Math.cos(camera.angle); 
     var sa = Math.sin(camera.angle);
     
-    camera.x += ca*3;
-    camera.y += sa*3
+    camera.x += ca*1;
+    camera.y += sa*1;
 
 });
 
@@ -253,8 +247,8 @@ Mousetrap.bind('s', function() {
     var ca = Math.cos(camera.angle); 
     var sa = Math.sin(camera.angle);
 
-    camera.x -= -sa*4;
-    camera.y -= ca*4;
+    camera.x -= -sa*1.5;
+    camera.y -= ca*1.5;
 
 });
 
@@ -263,16 +257,18 @@ Mousetrap.bind('d', function() {
     var ca = Math.cos(camera.angle); 
     var sa = Math.sin(camera.angle);
     
-    camera.x -= ca*3;
-    camera.x -= sa*3
+    camera.x -= ca*1;
+    camera.y -= sa*1
 
 });
 
-Mousetrap.bind('left', function() { camera.angle -= 0.05});
-Mousetrap.bind('right', function() { camera.angle += 0.05});
+Mousetrap.bind('left', function() { camera.angle -= 0.04});
+Mousetrap.bind('right', function() { camera.angle += 0.04});
 Mousetrap.bind('up', function() { camera.pitch -= 10});
 Mousetrap.bind('down', function() { camera.pitch += 10});
 Mousetrap.bind('ctrl+up', function() { camera.height += 10});
 Mousetrap.bind('ctrl+down', function() { camera.height -= 10});
+Mousetrap.bind('shift+up', function() { focalDepth += 10});
+Mousetrap.bind('shift+down', function() { focalDepth -= 10});
 Mousetrap.bind('space', function() { loadmaps(); });
 
