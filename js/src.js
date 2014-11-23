@@ -16,19 +16,15 @@ var max = pH*pW*4;
 
 var maps = 
     [
-    //    ['C10W.png', 'D10.png'],
         ['C1.png', 'D1.png'],
-    //    ['C2W.png', 'D2.png'],
-    //    ['C3.png', 'D3.png'],
-    //    ['C4.png', 'D4.png'],
-    //    ['C5W.png', 'D5.png'],
-    //    ['C6W.png', 'D6.png'],
         ['C7W.png', 'D7.png'],
-    //   ['C8.png', 'D8.png'],
-    //    ['C9W.png', 'D9.png']
+        ['C13.png', 'D13.png'],
+        ['C14.png', 'D14.png'],
+        ['C15.png', 'D15.png'],
+        ['C16W.png', 'D16.png'],
     ]
 
-var pos = 0;
+var pos = 1;
 var num_maps = maps.length;
 
 function load(file, type) {
@@ -73,7 +69,7 @@ var focalDepth = 200;
 var camera = {
     x: 512,
     y: 400,
-    height: -50,
+    height: 0,
     angle: 0,
     pitch:-100
 }
@@ -164,8 +160,6 @@ function update() {
         // rotate vector by angle
         // [cos, -sin] [x]
         // [sin,  cos] [y]
-        
-
         rx = ca*relx - sa*rely;
         ry = sa*relx + ca*rely;
 
@@ -189,19 +183,15 @@ function render() {
 }
 
 function init() {
-
-    //load('C1.png', "colour");
-    //load('D1.png', "depth");
-
     loadmaps();
     
     var size = scene.width * scene.height;
     
     for (var i = 0; i < size*4; i+=4) {
-        bg[i + 0] = 160; 
-        bg[i + 1] = 160;
+        bg[i + 0] = 135; 
+        bg[i + 1] = 206;
         bg[i + 2] = 255;
-        bg[i + 3] = 255;
+        bg[i + 3] = 128;
     } 
    
     scene.data.set(bg);
@@ -227,8 +217,8 @@ Mousetrap.bind('w', function() {
     var ca = Math.cos(camera.angle); 
     var sa = Math.sin(camera.angle);
 
-    camera.x += - sa*1.5;
-    camera.y += ca*1.5;
+    camera.x += - sa*1.75;
+    camera.y += ca*1.75;
 
 });
 
@@ -237,8 +227,8 @@ Mousetrap.bind('a', function() {
     var ca = Math.cos(camera.angle); 
     var sa = Math.sin(camera.angle);
     
-    camera.x += ca*1;
-    camera.y += sa*1;
+    camera.x += ca*1.5;
+    camera.y += sa*1.5;
 
 });
 
@@ -247,8 +237,8 @@ Mousetrap.bind('s', function() {
     var ca = Math.cos(camera.angle); 
     var sa = Math.sin(camera.angle);
 
-    camera.x -= -sa*1.5;
-    camera.y -= ca*1.5;
+    camera.x -= -sa*1.75;
+    camera.y -= ca*1.75;
 
 });
 
@@ -257,13 +247,13 @@ Mousetrap.bind('d', function() {
     var ca = Math.cos(camera.angle); 
     var sa = Math.sin(camera.angle);
     
-    camera.x -= ca*1;
-    camera.y -= sa*1
+    camera.x -= ca*1.5;
+    camera.y -= sa*1.5;
 
 });
 
-Mousetrap.bind('left', function() { camera.angle -= 0.04});
-Mousetrap.bind('right', function() { camera.angle += 0.04});
+Mousetrap.bind('left', function() { camera.angle -= 0.02});
+Mousetrap.bind('right', function() { camera.angle += 0.02});
 Mousetrap.bind('up', function() { camera.pitch -= 10});
 Mousetrap.bind('down', function() { camera.pitch += 10});
 Mousetrap.bind('ctrl+up', function() { camera.height += 10});
